@@ -34,12 +34,12 @@ class Poly:
         self.non_null_coefs = non_null_array(self.coefs)
         def impar_coefs ():
             impar_array = np.arange(self.grau + 1)
-            impar_array = impar_array[(impar_array%2 == 0)]
+            impar_array = impar_array[(impar_array%2 != 0)]
             self.impar_coefs = non_null_array(np.take(self.coefs, [impar_array]))
         impar_coefs()
         def par_coefs():
             par_array = np.arange(self.grau + 1)
-            par_array = par_array[(par_array%2 != 0)]
+            par_array = par_array[(par_array%2 == 0)]
             self.par_coefs = non_null_array(np.take(self.coefs, [par_array]))
         par_coefs()
 
@@ -58,22 +58,45 @@ class Poly:
         else:
             self.necessary_condition = False
 
-
 class Routh_Table:
     def __init__(self, poly):
         self.poly = poly
+        self.routh_table = 0
         self.sufficient_condition = 0
     
-    def b (square_matrix):
-        inv_det = (square_matrix[0,1]*square_matrix[1,0]) - (square_matrix[0,0]*square_matrix[0,0])
-        return 1/inv_det
-
     def make_table (self):
-        routh_table = np.zeros(shape=(poly.grau + 1, max(len(poly.par_coefs), len(poly.impar_coefs))), dtype=float)
+        def b (square_matrix):
+            inv_det = (square_matrix[0,1]*square_matrix[1,0]) - (square_matrix[0,0]*square_matrix[1,1])
+            return inv_det/square_matrix[1,0]
+
+        max_column = max(len(poly.par_coefs), len(poly.impar_coefs))
+        routh_table = np.zeros(shape=(poly.grau + 1, max_column), dtype=float)
         routh_table[0,0:len(poly.par_coefs)] = poly.par_coefs
         routh_table[1,0:len(poly.impar_coefs)] = poly.impar_coefs
+        
+        for row in range(2, poly.grau+1):
+            stable_column = routh_table[(row-2):2+(row-2), [0]]
+            for column in range(max_column-1):
+                variant_column = routh_table[row:2+row, [column+1]]
+                square_matrix = np.concatenate((stable_column,variant_column), axis=1)
+                routh_table[row,column] = b(square_matrix)
+            max_column =- 1
+        self.routh_table = routh_table
 
-poly = Poly(5)
+    def check_sufficient_condition (self):
+        if (np.all(self.routh_table[:,0] > 0)):
+            self.sufficient_condition = True
+        else:
+            self.sufficient_condition = False
+
+    def print_table(self):
+        print(self.routh_table)
+
+
+poly = Poly(4)
 poly.print_poly()
 poly.check_necessary_condition()
-print(poly.necessary_condition)
+
+routh_table = Routh_Table(poly)
+routh_table.make_table()
+print(routh_table.print_table())
