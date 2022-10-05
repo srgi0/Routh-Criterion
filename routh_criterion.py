@@ -1,5 +1,8 @@
 import numpy as np
 from PIL import Image as im
+import sys
+
+diferential_zero = sys.float_info.min
 
 class Poly:
     def __init__(self, grau):
@@ -28,6 +31,7 @@ class Poly:
                 a = float(input(f'a_{grau - i} = '))
                 coefs.append(a)
             return coefs
+        # a partir daqui tudo numpy.ndarray
         self.coefs = np.array(input_coef())
         def non_null_array (array):
             return array[array != 0]
@@ -80,7 +84,7 @@ class RouthTable:
                         row_from_matrix_simplified = row_from_matrix_simplified/div
             return row_from_matrix_simplified
 
-        def check_special_cases (self, row_from_matrix):
+        def check_special_cases (row_from_matrix):
             if ( self.routh_table[row_from_matrix,0] == 0 ) and \
             not ( np.all(self.routh_table[row_from_matrix,:] == 0) ) :
                 self.special_case_1_flag = True
@@ -88,6 +92,19 @@ class RouthTable:
             else:
                 self.special_case_1_flag = False
                 self.special_case_2_flag = True
+        
+        def resolve_special_case_1 (row):
+            self.routh_rable[row,0] = diferential_zero
+
+        def resolve_special_case_2 (row):
+            derivative = np.array((np.poly1d(self.routh_table[row-1,:]).deriv()))
+            
+            
+            
+            if derivative.size < self.routh_table_columns:
+                derivative = np.concatenate((derivative, [0]), axis = 0)
+                            
+            self.routh_table[row,:] = derivative
 
         self.routh_table_rows = self.Poly.grau + 1
         self.routh_table_columns = max(len(self.Poly.par_coefs), len(self.Poly.impar_coefs))
@@ -108,13 +125,6 @@ class RouthTable:
                     variant_column = self.routh_table[(row-2):2+(row-2), [column+1]]
                     square_matrix = np.concatenate((stable_column,variant_column), axis=1)
                     self.routh_table[row,column] = calc(square_matrix)
-            
-                check_special_cases(row)
-                if (self.special_case_1_flag):
-                    self.routh_table[row,0] = 1/np.inf
-                elif (self.special_case_2_flag):
-                    pass
-
                 self.routh_table[row,:] = simplify_row(self.routh_table[row,:])
 
         else:
@@ -128,6 +138,10 @@ class RouthTable:
                     self.routh_table[row,column] = calc(square_matrix)
                 
                 check_special_cases(row)
+                if (self.special_case_1_flag):
+                    resolve_special_case_1(row)
+                elif (self.special_case_2_flag):
+                    resolve_special_case_2(row)
 
 
     def check_sufficient_condition (self):
@@ -140,7 +154,7 @@ class RouthTable:
 
 
 
-poly = Poly(4)
+poly = Poly(5)
 poly.print_poly()
 poly.check_necessary_condition()
 print(f'Necessary condition is {poly.necessary_condition}')
@@ -149,4 +163,6 @@ routh_table = RouthTable(poly)
 routh_table.make_table(False)
 print(routh_table.routh_table)
 routh_table.check_sufficient_condition()
+print(f'Special Case 1 is {routh_table.special_case_1_flag}')
+print(f'Special Case 2 is {routh_table.special_case_2_flag}')
 print(f'Sufficient condition is {routh_table.sufficient_condition_flag}')
