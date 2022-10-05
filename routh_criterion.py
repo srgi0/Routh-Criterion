@@ -74,6 +74,13 @@ class RouthTable:
             inv_det = (square_matrix[0,1]*square_matrix[1,0]) - (square_matrix[0,0]*square_matrix[1,1])
             return inv_det/square_matrix[1,0]
 
+        def simplify_row (row_from_matrix):
+            row_from_matrix_simplified = row_from_matrix.copy()
+            for div in (2,3,5,7,11):
+                    while (np.all(row_from_matrix_simplified%div == 0)):
+                        row_from_matrix_simplified = row_from_matrix_simplified/div
+            return row_from_matrix_simplified
+
         self.routh_table_rows = self.Poly.grau + 1
         self.routh_table_columns = max(len(self.Poly.par_coefs), len(self.Poly.impar_coefs))
 
@@ -83,16 +90,16 @@ class RouthTable:
         
         if (simplified.count(True) > 0):
             self.routh_table_simplified = pre_routh_table.copy()
+            self.routh_table_simplified[0,:] = simplify_row(self.routh_table_simplified[0,:])
+            self.routh_table_simplified[1,:] = simplify_row(self.routh_table_simplified[1,:])
+
             for row in range(2, self.Poly.grau+1):
                 stable_column = self.routh_table_simplified[(row-2):2+(row-2), [0]]
                 for column in range(self.routh_table_columns-1):
                     variant_column = self.routh_table_simplified[(row-2):2+(row-2), [column+1]]
                     square_matrix = np.concatenate((stable_column,variant_column), axis=1)
                     self.routh_table_simplified[row,column] = calc(square_matrix)
-
-                for div in (2,3,5,7,11):
-                    while (np.all(self.routh_table_simplified[row,:]%div == 0)):
-                        self.routh_table_simplified[row,:] = self.routh_table_simplified[row,:]/div
+                self.routh_table_simplified[row,:] = simplify_row(self.routh_table_simplified[row,:])
 
         else:
             self.routh_table = pre_routh_table.copy()
@@ -133,11 +140,11 @@ class RouthTable:
 
 
 
-poly = Poly(3)
+poly = Poly(4)
 poly.print_poly()
 poly.check_necessary_condition()
 
 routh_table = RouthTable(poly)
-routh_table.make_table()
-print(routh_table.print_table())
+routh_table.make_table(True)
+print(routh_table.print_table(True))
 
