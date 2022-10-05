@@ -62,26 +62,47 @@ class Routh_Table:
     def __init__(self, poly):
         self.poly = poly
         self.routh_table = 0
+        self.routh_table_simplified = 0
         self.sufficient_condition = 0
     
-    def make_table (self):
-        def b (square_matrix):
+    def make_table (self, *simplified):
+        def calc (square_matrix):
             inv_det = (square_matrix[0,1]*square_matrix[1,0]) - (square_matrix[0,0]*square_matrix[1,1])
             return inv_det/square_matrix[1,0]
 
         max_column = max(len(poly.par_coefs), len(poly.impar_coefs))
-        routh_table = np.zeros(shape=(poly.grau + 1, max_column), dtype=float)
-        routh_table[0,0:len(poly.par_coefs)] = poly.par_coefs
-        routh_table[1,0:len(poly.impar_coefs)] = poly.impar_coefs
+        pre_routh_table = np.zeros(shape=(poly.grau + 1, max_column), dtype=float)
+        pre_routh_table[0,0:len(poly.par_coefs)] = poly.par_coefs
+        pre_routh_table[1,0:len(poly.impar_coefs)] = poly.impar_coefs
         
-        for row in range(2, poly.grau+1):
-            stable_column = routh_table[(row-2):2+(row-2), [0]]
-            for column in range(max_column-1):
-                variant_column = routh_table[row:2+row, [column+1]]
-                square_matrix = np.concatenate((stable_column,variant_column), axis=1)
-                routh_table[row,column] = b(square_matrix)
-            max_column =- 1
-        self.routh_table = routh_table
+        if (simplified.count(True) > 0):
+            self.routh_table_simplified = pre_routh_table.copy()
+            for row in range(2, poly.grau+1):
+                stable_column = self.routh_table_simplified[(row-2):2+(row-2), [0]]
+                for column in range(max_column-1):
+                    variant_column = self.routh_table_simplified[(row-2):2+(row-2), [column+1]]
+                    square_matrix = np.concatenate((stable_column,variant_column), axis=1)
+                    self.routh_table_simplified[row,column] = calc(square_matrix)
+
+                if (np.all(self.routh_table_simplified[row,:]%2 == 0)):
+                    self.routh_table_simplified[row,:] = self.routh_table_simplified[row,:]/2
+        else:
+            self.routh_table = pre_routh_table.copy()
+            for row in range(2, poly.grau+1):
+                stable_column = self.routh_table[(row-2):2+(row-2), [0]]
+                for column in range(max_column-1):
+                    variant_column = self.routh_table[(row-2):2+(row-2), [column+1]]
+                    square_matrix = np.concatenate((stable_column,variant_column), axis=1)
+                    self.routh_table[row,column] = calc(square_matrix)
+        
+
+    def print_table(self, *simplified):
+        if (simplified.count(True) > 0):
+            print('Simplified')
+            print(self.routh_table_simplified)
+        else:
+            print('Not simplified')
+            print(self.routh_table)
 
     def check_sufficient_condition (self):
         if (np.all(self.routh_table[:,0] > 0)):
@@ -89,14 +110,11 @@ class Routh_Table:
         else:
             self.sufficient_condition = False
 
-    def print_table(self):
-        print(self.routh_table)
-
 
 poly = Poly(4)
 poly.print_poly()
 poly.check_necessary_condition()
 
 routh_table = Routh_Table(poly)
-routh_table.make_table()
-print(routh_table.print_table())
+routh_table.make_table(True)
+print(routh_table.print_table(True))
