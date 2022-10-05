@@ -90,8 +90,10 @@ class RouthTable:
                     square_matrix = np.concatenate((stable_column,variant_column), axis=1)
                     self.routh_table_simplified[row,column] = calc(square_matrix)
 
-                if (np.all(self.routh_table_simplified[row,:]%2 == 0)):
-                    self.routh_table_simplified[row,:] = self.routh_table_simplified[row,:]/2
+                for div in (2,3,5,7,11):
+                    while (np.all(self.routh_table_simplified[row,:]%div == 0)):
+                        self.routh_table_simplified[row,:] = self.routh_table_simplified[row,:]/div
+
         else:
             self.routh_table = pre_routh_table.copy()
             for row in range(2, self.Poly.grau+1):
@@ -101,7 +103,6 @@ class RouthTable:
                     square_matrix = np.concatenate((stable_column,variant_column), axis=1)
                     self.routh_table[row,column] = calc(square_matrix)
         
-
     def print_table(self, *simplified):
         if (simplified.count(True) > 0):
             print('Simplified')
