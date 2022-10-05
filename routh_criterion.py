@@ -43,7 +43,12 @@ class Poly:
             self.par_coefs = non_null_array(np.take(self.coefs, [par_array]))
         par_coefs()
 
-        
+
+    def check_necessary_condition (self):
+        if (np.all(self.coefs >= 0)):
+            self.necessary_condition = True
+        else:
+            self.necessary_condition = False
 
     def print_poly(self):
         poly = ''
@@ -51,12 +56,7 @@ class Poly:
             poly = poly + f'{self.coefs[i]}s^{self.grau - i} + '
         poly = poly + f'{self.coefs[self.grau]}'
         print(poly)
-
-    def check_necessary_condition (self):
-        if (np.all(self.coefs >= 0)):
-            self.necessary_condition = True
-        else:
-            self.necessary_condition = False
+        
 
 class RouthTable:
     def __init__(self, Poly):
@@ -109,21 +109,13 @@ class RouthTable:
                     variant_column = self.routh_table[(row-2):2+(row-2), [column+1]]
                     square_matrix = np.concatenate((stable_column,variant_column), axis=1)
                     self.routh_table[row,column] = calc(square_matrix)
-        
-    def print_table(self, *simplified):
-        if (simplified.count(True) > 0):
-            print('Simplified')
-            print(self.routh_table_simplified)
-        else:
-            print('Not simplified')
-            print(self.routh_table)
+
 
     def check_sufficient_condition (self):
         if (np.all(self.routh_table[:,0] > 0)):
             self.sufficient_condition = True
         else:
             self.sufficient_condition = False
-    
 
     def check_special_case_1 (self):
         if (np.any(self.routh_table[:,0] == 0)):
@@ -138,13 +130,27 @@ class RouthTable:
             else:
                 self.special_case_2 = False
 
+    
+    def print_table(self, *simplified):
+        if (simplified.count(True) > 0):
+            print('Simplified')
+            print(self.routh_table_simplified)
+        else:
+            print('Not simplified')
+            print(self.routh_table)
+
 
 
 poly = Poly(4)
 poly.print_poly()
 poly.check_necessary_condition()
+print(f'Necessary condition is {poly.necessary_condition}')
 
 routh_table = RouthTable(poly)
+routh_table.make_table()
+routh_table.print_table()
 routh_table.make_table(True)
-print(routh_table.print_table(True))
+routh_table.print_table(True)
+routh_table.check_sufficient_condition()
+print(f'Sufficient condition is {routh_table.sufficient_condition}')
 
