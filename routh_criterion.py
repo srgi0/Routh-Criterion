@@ -83,8 +83,8 @@ class RouthTable:
         def simplify_row (row_from_matrix):
             row_from_matrix_simplified = row_from_matrix.copy()
             for div in (2,3,5,7,11):
-                    while (np.all(row_from_matrix_simplified%div == 0)):
-                        row_from_matrix_simplified = row_from_matrix_simplified/div
+                while (np.all(row_from_matrix_simplified%div == 0)):
+                    row_from_matrix_simplified = row_from_matrix_simplified/div
             return row_from_matrix_simplified
 
         def check_special_cases (row_from_matrix):
