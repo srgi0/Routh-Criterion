@@ -99,24 +99,36 @@ class RouthTable:
         def resolve_special_case_1 (row):
             self.routh_rable[row,0] = diferential_zero
 
-        def resolve_special_case_2 (row):
-            poly = np.zeros(shape=(1,self.poly.size), dtype=float)[0]
-            column_routh_table = 0
-            # considerando que somente pegara a segunda linha (ímpares)
-            for column in range(self.poly.size):
-                if (column%2 == 0):
-                    poly[column] = 0
-                else:
-                    poly[column] = self.routh_table[row-1,column_routh_table]
-                    column_routh_table =+ 1
+        def resolve_special_case_2 (row_from_matrix):
+            def replace_row(row_from_matrix):
+                poly = np.zeros(shape=(1,self.poly.size), dtype=float)[0]
+                column_routh_table = 0
+                # considerando que somente pegara a segunda linha (ímpares)
+                for column in range(self.poly.size):
+                    if (column%2 == 0):
+                        poly[column] = 0
+                    else:
+                        poly[column] = self.routh_table[row_from_matrix-1,column_routh_table]
+                        column_routh_table =+ 1
 
-            derivative = np.array(np.poly1d(poly).deriv())
-            non_null_derivative = derivative[derivative != 0]
+                derivative = np.array(np.poly1d(poly).deriv())
+                non_null_derivative = derivative[derivative != 0]
 
-            if non_null_derivative.size < self.routh_table_columns:
-                non_null_derivative = np.concatenate((non_null_derivative, [0]), axis = 0)
-                            
-            self.routh_table[row,:] = non_null_derivative
+                if non_null_derivative.size < self.routh_table_columns:
+                    non_null_derivative = np.concatenate((non_null_derivative, [0]), axis = 0)
+                                
+                self.routh_table[row_from_matrix,:] = non_null_derivative
+            replace_row(row_from_matrix)
+            
+            # trocar self.routh_table[:,0] por self.routh_first_column
+            def count_signal_change ():
+                sign_change_counter = 0
+                for row in range(self.poly.size - 1):
+                    if np.sign(self.routh_table[row,0]) != np.sign(self.routh_table[row+1,0]):
+                        sign_change_counter =+ 1
+            
+            
+
 
         self.routh_table_rows = self.poly.size
         self.routh_table_columns = max(len(self.poly.par_coefs), len(self.poly.impar_coefs))
